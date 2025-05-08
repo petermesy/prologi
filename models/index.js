@@ -8,10 +8,11 @@ const config = {
 const sequelize = new Sequelize('products', 'logger', '1234', config);
 
 const Category = sequelize.define('Category', {
-  category_id: {
+  categoryId: {  // Changed from category_id to categoryId for consistency
     type: Sequelize.UUID,
     defaultValue: Sequelize.UUIDV4,
-    primaryKey: true
+    primaryKey: true,
+    field: 'category_id'  // This maintains the database column name
   },
   categoryName: {
     type: Sequelize.TEXT,
@@ -23,7 +24,8 @@ const Category = sequelize.define('Category', {
 const Product = sequelize.define('Product', {
   productId: {
     type: Sequelize.TEXT,
-    primaryKey: true
+    primaryKey: true,
+    field: 'product_id'
   },
   productName: {
     type: Sequelize.TEXT,
@@ -35,14 +37,23 @@ const Product = sequelize.define('Product', {
   lifeExpectancy: {
     type: Sequelize.INTEGER,
     allowNull: false
+  },
+  categoryId: {  // Added explicit foreign key
+    type: Sequelize.UUID,
+    references: {
+      model: 'Categories',
+      key: 'category_id'
+    },
+    field: 'category_id'
   }
 });
 
 const Package = sequelize.define('Package', {
-  package_id: {
+  packageId: {  // Changed from package_id to packageId
     type: Sequelize.UUID,
     defaultValue: Sequelize.UUIDV4,
-    primaryKey: true
+    primaryKey: true,
+    field: 'package_id'
   },
   packageName: {
     type: Sequelize.TEXT,
@@ -59,14 +70,39 @@ const Package = sequelize.define('Package', {
 });
 
 const ProductItem = sequelize.define('ProductItem', {
-  id: {
+  productItemId: {  // Changed from id to productItemId
     type: Sequelize.UUID,
     defaultValue: Sequelize.UUIDV4,
-    primaryKey: true
+    primaryKey: true,
+    field: 'product_item_id'
   },
-  product_barcode: {
+  productBarcode: {  // Changed from product_barcode to productBarcode
     type: Sequelize.STRING,
+    allowNull: false,
+    unique: true,
+    field: 'product_barcode'
+  },
+  productId: {  // Added explicit foreign key
+    type: Sequelize.TEXT,
+    allowNull: false,
+    references: {
+      model: 'Products',
+      key: 'product_id'
+    },
+    field: 'product_id'
+  },
+  productName: {  // Added productName column
+    type: Sequelize.TEXT,
     allowNull: false
+  },
+  packageId: {  // Added explicit foreign key
+    type: Sequelize.UUID,
+    allowNull: false,
+    references: {
+      model: 'Packages',
+      key: 'package_id'
+    },
+    field: 'package_id'
   },
   registrationDate: {
     type: Sequelize.DATE,
@@ -76,9 +112,10 @@ const ProductItem = sequelize.define('ProductItem', {
     type: Sequelize.ENUM('store', 'distcenter'),
     allowNull: false
   },
-  locationID: {
+  locationId: {
     type: Sequelize.ENUM('store', 'distcenter'),
-    allowNull: false
+    allowNull: false,
+    field: 'location_id'
   },
   expiryDate: {
     type: Sequelize.DATE,
@@ -91,10 +128,20 @@ const ProductItem = sequelize.define('ProductItem', {
 });
 
 const Feedback = sequelize.define('Feedback', {
-  id: {
+  feedbackId: {  // Changed from id to feedbackId
     type: Sequelize.UUID,
     defaultValue: Sequelize.UUIDV4,
-    primaryKey: true
+    primaryKey: true,
+    field: 'feedback_id'
+  },
+  productItemId: {  // Added explicit foreign key
+    type: Sequelize.UUID,
+    allowNull: false,
+    references: {
+      model: 'ProductItems',
+      key: 'product_item_id'
+    },
+    field: 'product_item_id'
   },
   user: {
     type: Sequelize.STRING,
@@ -106,30 +153,71 @@ const Feedback = sequelize.define('Feedback', {
   },
   rating: {
     type: Sequelize.FLOAT
-  },
-  createdAt: {
-    type: Sequelize.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.NOW
-  },
-  updatedAt: {
-    type: Sequelize.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.NOW
   }
+}, {
+  timestamps: true
 });
-// Define relationships
-Category.hasMany(Product);
-Product.belongsTo(Category);
 
-Product.hasMany(ProductItem);
-ProductItem.belongsTo(Product);
+// Define relationships with proper foreign keys
+Category.hasMany(Product, {
+  foreignKey: 'categoryId',
+  sourceKey: 'categoryId',
+  as: 'products'
+});
+Product.belongsTo(Category, {
+  foreignKey: 'categoryId',
+  targetKey: 'categoryId',
+  as: 'category'
+});
 
-Package.hasMany(ProductItem);
-ProductItem.belongsTo(Package);
+Product.hasMany(ProductItem, {
+  foreignKey: 'productId',
+  sourceKey: 'productId',
+  as: 'productItems'
+});
+ProductItem.belongsTo(Product, {
+  foreignKey: 'productId',
+  targetKey: 'productId',
+  as: 'product'
+});
 
-ProductItem.hasMany(Feedback);
-Feedback.belongsTo(ProductItem);
+Package.hasMany(ProductItem, {
+  foreignKey: 'packageId',
+  sourceKey: 'packageId',
+  as: 'productItems'
+});
+ProductItem.belongsTo(Package, {
+  foreignKey: 'packageId',
+  targetKey: 'packageId',
+  as: 'package'
+});
+
+ProductItem.hasMany(Feedback, {
+  foreignKey: 'productItemId',
+  sourceKey: 'productItemId',
+  as: 'feedbacks'
+});
+Feedback.belongsTo(ProductItem, {
+  foreignKey: 'productItemId',
+  targetKey: 'productItemId',
+  as: 'productItem'
+});
+
+// Hooks to sync productName
+Product.afterUpdate(async (product) => {
+  await ProductItem.update(
+    { productName: product.productName },
+    { where: { productId: product.productId } }
+  );
+});
+
+Product.afterCreate(async (product) => {
+  await ProductItem.update(
+    { productName: product.productName },
+    { where: { productId: product.productId } }
+  );
+});
+
 module.exports = {
   sequelize,
   Category,

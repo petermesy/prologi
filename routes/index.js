@@ -36,7 +36,7 @@ router.post('/upload/csv', upload.single('file'), uploadController.uploadCSV);
 router.get('/product/:barcode', productController.getProductByBarcode);
 router.post('/product/:barcode/feedback', productController.addFeedback);
 
-// Expiry monitoring routes
+// Expiry routes
 router.get('/expiry/status', expiryController.getExpiryStatus);
 router.get('/expiry/by-category', expiryController.getExpiryStatsByCategory);
 router.get('/expiry/by-location', expiryController.getExpiryStatsByLocation);

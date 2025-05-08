@@ -1,6 +1,7 @@
 const { ProductItem, Product, Category, Package } = require('../models');
 const { Op } = require('sequelize');
 
+// Get expiry status
 exports.getExpiryStatus = async (req, res) => {
   try {
     const today = new Date();
@@ -15,20 +16,26 @@ exports.getExpiryStatus = async (req, res) => {
       include: [
         {
           model: Product,
-          include: [Category]
+          as: 'product',
+          include: [
+            {
+              model: Category,
+              as: 'category'
+            }
+          ]
         },
         {
-          model: Package
+          model: Package,
+          as: 'package'
         }
       ],
       order: [['expiryDate', 'ASC']]
     });
 
-    // Categorize products by expiry status
     const expired = [];
-    const critical = []; // 0-7 days
-    const warning = []; // 8-14 days
-    const attention = []; // 15-30 days
+    const critical = [];
+    const warning = [];
+    const attention = [];
 
     products.forEach(product => {
       const expiryDate = new Date(product.expiryDate);
@@ -80,17 +87,22 @@ exports.getExpiryStatsByCategory = async (req, res) => {
       include: [
         {
           model: Product,
-          include: [Category]
+          as: 'product',
+          include: [
+            {
+              model: Category,
+              as: 'category'
+            }
+          ]
         }
       ],
       order: [['expiryDate', 'ASC']]
     });
 
-    // Group by category
     const categoryStats = {};
 
     products.forEach(product => {
-      const categoryName = product.Product.Category.categoryName;
+      const categoryName = product.product?.category?.categoryName || 'Unknown';
       const expiryDate = new Date(product.expiryDate);
       const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
 
@@ -138,17 +150,22 @@ exports.getExpiryStatsByLocation = async (req, res) => {
       include: [
         {
           model: Product,
-          include: [Category]
+          as: 'product',
+          include: [
+            {
+              model: Category,
+              as: 'category'
+            }
+          ]
         }
       ],
       order: [['expiryDate', 'ASC']]
     });
 
-    // Group by location
     const locationStats = {};
 
     products.forEach(product => {
-      const location = product.location;
+      const location = product.location || 'Unknown';
       const expiryDate = new Date(product.expiryDate);
       const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
 

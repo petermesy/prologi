@@ -8,28 +8,34 @@ exports.uploadCSV = async (req, res) => {
   const packages = new Map();
   const productItems = [];
 
+  // Mapping numeric location IDs to their string equivalents
+  const locationMap = {
+    '1': 'store',
+    '2': 'distcenter'
+  };
+
   fs.createReadStream(req.file.path)
     .pipe(csv())
     .on('data', (data) => {
-      // Process Category
+      // Collect Category
       if (!categories.has(data.categoryName)) {
         categories.set(data.categoryName, {
           categoryName: data.categoryName
         });
       }
 
-      // Process Product
+      // Collect Product
       if (!products.has(data.productId)) {
         products.set(data.productId, {
           productId: data.productId,
           productName: data.productName,
           description: data.description,
           lifeExpectancy: parseInt(data.lifeExpectancy),
-          categoryName: data.categoryName // We'll use this to link to category later
+          categoryName: data.categoryName // Temporary for mapping
         });
       }
 
-      // Process Package
+      // Collect Package
       if (!packages.has(data.packageName)) {
         packages.set(data.packageName, {
           packageName: data.packageName,
@@ -38,30 +44,36 @@ exports.uploadCSV = async (req, res) => {
         });
       }
 
-      // Process ProductItem
+      // Validate and collect ProductItem
       const registrationDate = new Date(data.registrationDate);
       const expiryDate = new Date(data.expiryDate);
-      
       if (isNaN(registrationDate.getTime()) || isNaN(expiryDate.getTime())) {
         throw new Error('Invalid date format in CSV');
       }
 
+      // Map locationId to its string equivalent
+      const mappedLocationId = locationMap[data.locationId];
+      if (!mappedLocationId) {
+        throw new Error(`Invalid locationId: ${data.locationId}. Must be '1' or '2'.`);
+      }
+
       productItems.push({
-        product_barcode: data.product_barcode,
+        productBarcode: data.product_barcode,
         productId: data.productId,
-        packageName: data.packageName, // We'll use this to link to package later
+        productName: data.productName,
+        packageName: data.packageName, // Temporary for mapping
         registrationDate: registrationDate,
         location: data.location.toLowerCase(),
-        locationID: data.locationID.toLowerCase(),
+        locationId: mappedLocationId,
         expiryDate: expiryDate
       });
     })
     .on('end', async () => {
       const transaction = await sequelize.transaction();
-      
+
       try {
-        // First, sync all models (create tables)
-        await sequelize.sync({ force: true }); // Be careful with force: true in production!
+        // Recreate tables (optional for development)
+        await sequelize.sync({ force: true }); // ⚠️ Don't use force: true in production!
 
         // Create categories
         const createdCategories = await Category.bulkCreate(
@@ -69,11 +81,11 @@ exports.uploadCSV = async (req, res) => {
           { transaction }
         );
 
-        // Create products with category associations
         const categoryMap = new Map(
-          createdCategories.map(cat => [cat.categoryName, cat.category_id])
+          createdCategories.map(cat => [cat.categoryName, cat.categoryId])
         );
 
+        // Create products with category references
         const productsToCreate = Array.from(products.values()).map(product => ({
           ...product,
           categoryId: categoryMap.get(product.categoryName)
@@ -88,20 +100,26 @@ exports.uploadCSV = async (req, res) => {
         );
 
         const packageMap = new Map(
-          createdPackages.map(pkg => [pkg.packageName, pkg.package_id])
+          createdPackages.map(pkg => [pkg.packageName, pkg.packageId])
         );
 
-        // Create product items with all associations
+        // Create product items
         const productItemsToCreate = productItems.map(item => ({
-          ...item,
-          package_id: packageMap.get(item.packageName)
+          productBarcode: item.productBarcode,
+          productId: item.productId,
+          productName: item.productName,
+          packageId: packageMap.get(item.packageName),
+          registrationDate: item.registrationDate,
+          location: item.location,
+          locationId: item.locationId,
+          expiryDate: item.expiryDate
         }));
 
         await ProductItem.bulkCreate(productItemsToCreate, { transaction });
 
         await transaction.commit();
         fs.unlinkSync(req.file.path);
-        res.status(200).json({ 
+        res.status(200).json({
           message: 'Upload successful',
           stats: {
             categories: categories.size,
