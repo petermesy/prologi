@@ -8,7 +8,6 @@ exports.uploadCSV = async (req, res) => {
   const packages = new Map();
   const productItems = [];
 
-  // Mapping numeric location IDs to their string equivalents
   const locationMap = {
     '1': 'store',
     '2': 'distcenter'
@@ -17,25 +16,22 @@ exports.uploadCSV = async (req, res) => {
   fs.createReadStream(req.file.path)
     .pipe(csv())
     .on('data', (data) => {
-      // Collect Category
       if (!categories.has(data.categoryName)) {
         categories.set(data.categoryName, {
           categoryName: data.categoryName
         });
       }
 
-      // Collect Product
       if (!products.has(data.productId)) {
         products.set(data.productId, {
           productId: data.productId,
           productName: data.productName,
           description: data.description,
           lifeExpectancy: parseInt(data.lifeExpectancy),
-          categoryName: data.categoryName // Temporary for mapping
+          categoryName: data.categoryName
         });
       }
 
-      // Collect Package
       if (!packages.has(data.packageName)) {
         packages.set(data.packageName, {
           packageName: data.packageName,
@@ -44,14 +40,12 @@ exports.uploadCSV = async (req, res) => {
         });
       }
 
-      // Validate and collect ProductItem
       const registrationDate = new Date(data.registrationDate);
       const expiryDate = new Date(data.expiryDate);
       if (isNaN(registrationDate.getTime()) || isNaN(expiryDate.getTime())) {
         throw new Error('Invalid date format in CSV');
       }
 
-      // Map locationId to its string equivalent
       const mappedLocationId = locationMap[data.locationId];
       if (!mappedLocationId) {
         throw new Error(`Invalid locationId: ${data.locationId}. Must be '1' or '2'.`);
@@ -61,7 +55,7 @@ exports.uploadCSV = async (req, res) => {
         productBarcode: data.product_barcode,
         productId: data.productId,
         productName: data.productName,
-        packageName: data.packageName, // Temporary for mapping
+        packageName: data.packageName,
         registrationDate: registrationDate,
         location: data.location.toLowerCase(),
         locationId: mappedLocationId,
@@ -72,38 +66,50 @@ exports.uploadCSV = async (req, res) => {
       const transaction = await sequelize.transaction();
 
       try {
-        // Recreate tables (optional for development)
-        await sequelize.sync({ force: true }); // ⚠️ Don't use force: true in production!
+        await sequelize.sync(); // ✅ Safe table creation
 
-        // Create categories
+        // Check for existing barcodes before inserting
+        const existingBarcodes = await ProductItem.findAll({
+          where: {
+            productBarcode: productItems.map(item => item.productBarcode)
+          },
+          attributes: ['productBarcode']
+        });
+
+        const existingBarcodeSet = new Set(existingBarcodes.map(item => item.productBarcode));
+        const duplicates = productItems.filter(item => existingBarcodeSet.has(item.productBarcode));
+
+        if (duplicates.length > 0) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: `Duplicate barcode(s) detected: ${duplicates.map(d => d.productBarcode).join(', ')}`,
+            message: 'Some items already exist in the system.'
+          });
+        }
+
         const createdCategories = await Category.bulkCreate(
-          Array.from(categories.values()),
-          { transaction }
+          Array.from(categories.values()), { transaction, ignoreDuplicates: true }
         );
 
         const categoryMap = new Map(
           createdCategories.map(cat => [cat.categoryName, cat.categoryId])
         );
 
-        // Create products with category references
         const productsToCreate = Array.from(products.values()).map(product => ({
           ...product,
           categoryId: categoryMap.get(product.categoryName)
         }));
 
-        const createdProducts = await Product.bulkCreate(productsToCreate, { transaction });
+        await Product.bulkCreate(productsToCreate, { transaction, ignoreDuplicates: true });
 
-        // Create packages
         const createdPackages = await Package.bulkCreate(
-          Array.from(packages.values()),
-          { transaction }
+          Array.from(packages.values()), { transaction, ignoreDuplicates: true }
         );
 
         const packageMap = new Map(
           createdPackages.map(pkg => [pkg.packageName, pkg.packageId])
         );
 
-        // Create product items
         const productItemsToCreate = productItems.map(item => ({
           productBarcode: item.productBarcode,
           productId: item.productId,
