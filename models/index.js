@@ -83,9 +83,41 @@ const ProductItem = sequelize.define('ProductItem', {
   expiryDate: {
     type: Sequelize.DATE,
     allowNull: false
+  },
+  status: {
+    type: Sequelize.ENUM('normal', 'attention', 'warning', 'critical', 'expired'),
+    defaultValue: 'normal'
   }
 });
 
+const Feedback = sequelize.define('Feedback', {
+  id: {
+    type: Sequelize.UUID,
+    defaultValue: Sequelize.UUIDV4,
+    primaryKey: true
+  },
+  user: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  feedback: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  rating: {
+    type: Sequelize.FLOAT
+  },
+  createdAt: {
+    type: Sequelize.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.NOW
+  },
+  updatedAt: {
+    type: Sequelize.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.NOW
+  }
+});
 // Define relationships
 Category.hasMany(Product);
 Product.belongsTo(Category);
@@ -96,10 +128,13 @@ ProductItem.belongsTo(Product);
 Package.hasMany(ProductItem);
 ProductItem.belongsTo(Package);
 
+ProductItem.hasMany(Feedback);
+Feedback.belongsTo(ProductItem);
 module.exports = {
   sequelize,
   Category,
   Product,
   Package,
-  ProductItem
+  ProductItem,
+  Feedback
 };
