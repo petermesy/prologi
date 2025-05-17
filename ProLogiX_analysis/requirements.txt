@@ -12,3 +12,4 @@ sentencepiece  # Required by BART and some other models
 
 # Development
 python-dotenv  
+gunicorn
