@@ -8,10 +8,7 @@ flask-cors
 transformers
 torch  
 sentencepiece  # Required by BART and some other models
-scipy  
 
-# Utilities
-gunicorn  
 
 # Development
 python-dotenv  
