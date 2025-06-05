@@ -20,6 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     Package.associate = (models) => {
         Package.hasMany(models.ProductItem, {
             foreignKey: 'packageId',
+            sourceKey: 'package_id',
+            as: 'productItems'
         });
     };
 
