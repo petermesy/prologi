@@ -10,8 +10,12 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
         },
         location_id: {
-            type: DataTypes.STRING,
+            type: DataTypes.UUID, // <-- Fix: use UUID to match DistributionCenter.center_id
             allowNull: false,
+            references: {
+                model: 'DistributionCenters',
+                key: 'center_id'
+            }
         },
         quantity: {
             type: DataTypes.INTEGER,
@@ -34,6 +38,7 @@ module.exports = (sequelize, DataTypes) => {
         });
         InventoryLevel.belongsTo(models.DistributionCenter, {
             foreignKey: 'location_id',
+            targetKey: 'center_id',
             as: 'location',
         });
     };
