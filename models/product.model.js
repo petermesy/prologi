@@ -24,6 +24,18 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: 'productId',
         });
     };
-
+// Add after the associate function in product.model.js
+Product.afterUpdate(async (product) => {
+    await sequelize.models.ProductItem.update(
+        { productName: product.productName },
+        { where: { productId: product.product_id } }
+    );
+});
+Product.afterCreate(async (product) => {
+    await sequelize.models.ProductItem.update(
+        { productName: product.productName },
+        { where: { productId: product.product_id } }
+    );
+});
     return Product;
 };

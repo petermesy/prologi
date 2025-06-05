@@ -1,39 +1,35 @@
 module.exports = (sequelize, DataTypes) => {
     const Feedback = sequelize.define('Feedback', {
         feedback_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
-            autoIncrement: true,
         },
-        customer_id: {
+        productItemId: {
             type: DataTypes.UUID,
             allowNull: false,
         },
-        product_id: {
+        user: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        feedback: {
             type: DataTypes.TEXT,
             allowNull: false,
         },
         rating: {
-            type: DataTypes.INTEGER,
-            validate: {
-                min: 1,
-                max: 5,
-            },
-        },
-        comment: {
-            type: DataTypes.STRING,
-        },
-        created_at: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW,
+            type: DataTypes.FLOAT,
         }
     }, {
-        timestamps: false,
+        timestamps: true,
     });
 
     Feedback.associate = (models) => {
-        Feedback.belongsTo(models.User, { foreignKey: 'customer_id' });
-        Feedback.belongsTo(models.Product, { foreignKey: 'product_id' });
+        Feedback.belongsTo(models.ProductItem, {
+            foreignKey: 'productItemId',
+            targetKey: 'product_item_id',
+            as: 'productItem'
+        });
     };
 
     return Feedback;

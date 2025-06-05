@@ -1,0 +1,4 @@
+categoryName,productId,productName,description,lifeExpectancy,packageName,holdingCapacity,packageRegistrationDate,product_barcode,registrationDate,location,locationID,expiryDate
+electronics,PROD001,Milk,Fresh milk,14,Pack1,1,5/7/2025,123456789,5/7/2025,store,store,5/21/2025
+Dairy,PROD002,Yogurt,Greek yogurt,21,Pack2,500,5/7/2025,347654321,5/7/2025,store,store,5/28/2025
+Beverages,PROD003,Cola,Soft drink,90,Pack3,2,5/7/2025,476789123,5/7/2025,distcenter,distcenter,8/5/2025
