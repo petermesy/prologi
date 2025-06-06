@@ -5,7 +5,7 @@ exports.getProductByBarcode = async (req, res) => {
     const { barcode } = req.params;
     
     const productItem = await ProductItem.findOne({
-      where: { productBarcode: barcode },
+      where: { product_barcode: barcode },
       include: [
         {
           model: Product,
@@ -43,7 +43,7 @@ exports.addFeedback = async (req, res) => {
     const { user, feedback, rating } = req.body;
 
     const productItem = await ProductItem.findOne({
-      where: { productBarcode: barcode }
+      where: { product_barcode: barcode }
     });
 
     if (!productItem) {
@@ -51,7 +51,7 @@ exports.addFeedback = async (req, res) => {
     }
 
     const newFeedback = await Feedback.create({
-      productItemId: productItem.productItemId,
+      productItemId: productItem.product_item_id,
       user,
       feedback,
       rating

@@ -1,0 +1,5 @@
+categoryName,productId,productName,description,lifeExpectancy,packageName,holdingCapacity,packageRegistrationDate,product_barcode,registrationDate,location,locationID,expiryDate
+Dairy,PROD001,Milk,Fresh whole milk,14,Carton,12,2024-01-01,1234567890123,2024-06-01,Warehouse A,loc-001,2024-06-15
+Bakery,PROD002,Bread,Whole wheat bread,7,Plastic Bag,20,2024-01-02,1234567890124,2024-06-02,Warehouse B,loc-002,2024-06-09
+Beverages,PROD003,Orange Juice,100% orange juice,30,Bottle,24,2024-01-03,1234567890125,2024-06-03,Warehouse C,loc-003,2024-07-03
+Snacks,PROD004,Potato Chips,Classic salted chips,180,Bag,36,2024-01-04,1234567890126,2024-06-04,Warehouse D,loc-004,2024-12-01

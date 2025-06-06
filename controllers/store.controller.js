@@ -26,6 +26,8 @@ module.exports = {
 
             res.status(created ? 201 : 200).json(record);
         } catch (error) {
+                console.error(error); // Log the real error
+
             res.status(500).json({ error: 'Failed to upsert inventory' });
         }
     },

@@ -10,6 +10,11 @@ const db = require('./models');
 const authRoutes = require('./routes/auth');
 const storeRoutes = require('./routes/store.route');
 const restockRoutes = require('./routes/restock.route');
+const distributionCenterRoutes = require('./routes/distributionCenter');
+const inventoryRoutes = require('./routes/inventoryRoute');
+const deliveryRoutes = require('./routes/deliveryTrackRoute');
+// const uploadRoutes = require('./routes/upload');
+const routes = require('./routes');
 
 // Init Express
 const app = express();
@@ -28,7 +33,10 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/store', storeRoutes);
 app.use('/restock', restockRoutes);
-
+app.use('/', routes);
+app.use('/distribution-centers', distributionCenterRoutes);
+app.use('/inventory', inventoryRoutes); 
+app.use('/track', deliveryRoutes);
 // Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);

@@ -6,7 +6,7 @@ const fs = require('fs');
 const router = express.Router();
 
 // Import controllers
-const uploadController = require('../controllers/uploadcontroller');
+const uploadController = require('../controllers/uploadController');
 const productController = require('../controllers/productController');
 const expiryController = require('../controllers/expiryController');
 

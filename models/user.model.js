@@ -1,3 +1,6 @@
+// ...existing code...
+const bcrypt = require('bcrypt');
+
 module.exports = (sequelize, DataTypes) => {
     const User = sequelize.define('User', {
         user_id: {
@@ -19,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         password: {
             type: DataTypes.STRING,
-            allowNull: true, // optional if you allow anonymous users (empty password)
+            allowNull: true,
         },
         role: {
             type: DataTypes.ENUM('admin', 'user', 'anonymous'),
@@ -34,6 +37,18 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: DataTypes.NOW,
         },
     });
+
+    // Hash password before saving
+    User.beforeCreate(async (user) => {
+        if (user.password) {
+            user.password = await bcrypt.hash(user.password, 10);
+        }
+    });
+
+    // Instance method for password validation
+    User.prototype.validPassword = async function(password) {
+        return bcrypt.compare(password, this.password);
+    };
 
     User.associate = (models) => {
         User.hasMany(models.Feedback, {

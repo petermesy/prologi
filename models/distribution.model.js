@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
         shipment_location: DataTypes.STRING,
         shipped_at: DataTypes.DATE,
         received_at: DataTypes.DATE,
+         quantity: DataTypes.INTEGER 
     }, {
         timestamps: false,
         tableName: 'Distributions'
