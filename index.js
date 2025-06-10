@@ -15,6 +15,7 @@ const inventoryRoutes = require('./routes/inventoryRoute');
 const deliveryRoutes = require('./routes/deliveryTrackRoute');
 // const uploadRoutes = require('./routes/upload');
 const routes = require('./routes');
+const analyticsRoutes = require('./routes/analyticsrouter');
 
 // Init Express
 const app = express();
@@ -35,8 +36,9 @@ app.use('/store', storeRoutes);
 app.use('/restock', restockRoutes);
 app.use('/', routes);
 app.use('/distribution-centers', distributionCenterRoutes);
-app.use('/inventory', inventoryRoutes); 
+app.use('/api', inventoryRoutes); 
 app.use('/track', deliveryRoutes);
+app.use('/analytics', analyticsRoutes);
 // Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);

@@ -16,14 +16,28 @@ module.exports = (sequelize, DataTypes) => {
         },
     });
 
+    // Product.associate = (models) => {
+    //     Product.belongsTo(models.Category, {
+    //         foreignKey: 'categoryId',
+    //          as: 'category' 
+    //     });
+    //     Product.hasMany(models.ProductItem, {
+    //         foreignKey: 'productId',
+    //     });
+    // };
     Product.associate = (models) => {
-        Product.belongsTo(models.Category, {
-            foreignKey: 'categoryId',
-        });
-        Product.hasMany(models.ProductItem, {
-            foreignKey: 'productId',
-        });
-    };
+    Product.belongsTo(models.Category, {
+        foreignKey: 'categoryId',
+        as: 'category' 
+    });
+    Product.hasMany(models.ProductItem, {
+        foreignKey: 'productId',
+    });
+    Product.hasMany(models.InventoryLevel, {
+        foreignKey: 'product_id',
+        as: 'inventoryLevels'
+    });
+};
 // Add after the associate function in product.model.js
 Product.afterUpdate(async (product) => {
     await sequelize.models.ProductItem.update(

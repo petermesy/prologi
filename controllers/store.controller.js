@@ -2,14 +2,50 @@ const { InventoryLevel, Product, Location } = require('../models');
 
 module.exports = {
     async getInventoryByLocation(req, res) {
-        const { location_id } = req.params;
+        // const { location_id } = req.params;
+        // try {
+        //     const inventory = await InventoryLevel.findAll({
+        //         where: { location_id },
+        //         include: ['product', 'location'],
+        //     });
+        //     res.status(200).json(inventory);
+        // } catch (error) {
+        //     res.status(500).json({ error: 'Failed to fetch inventory' });
+        // }
+      const { location_id } = req.params;
         try {
             const inventory = await InventoryLevel.findAll({
                 where: { location_id },
-                include: ['product', 'location'],
+                include: [
+                    {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['product_id', 'productName', 'categoryname', 'minimumStock', 'maxStock', 'expirydate', 'lastRestocked']
+                    },
+                    {
+                        model: Location,
+                        as: 'location',
+                        attributes: ['location_id', 'locationName']
+                    }
+                ],
             });
-            res.status(200).json(inventory);
+
+            // Map to frontend-friendly format
+            const result = inventory.map(item => ({
+                id: item.product_id,
+                name: item.product?.productName,
+                category: item.product?.categoryname,
+                currentStock: item.quantity,
+                minimumStock: item.product?.minimumStock ?? 20,
+                maxStock: item.product?.maxStock ?? 1000,
+                location: item.location?.locationName,
+                expiryDate: item.product?.expirydate,
+                lastRestocked: item.product?.lastRestocked,
+            }));
+
+            res.status(200).json(result);
         } catch (error) {
+            console.error(error);
             res.status(500).json({ error: 'Failed to fetch inventory' });
         }
     },
