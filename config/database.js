@@ -10,7 +10,7 @@ if (process.env.DATABASE_URL) {
     dialect: 'postgres',
     logging: false,
     dialectOptions: isInternal
-      ? {} // ⬅️ No SSL for internal connection
+      ? {} // No SSL for internal DB
       : {
           ssl: {
             require: true,
