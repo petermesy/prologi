@@ -4,16 +4,21 @@ require('dotenv').config();
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-  // Use DATABASE_URL if provided (for Render, Railway, etc.)
+  const isInternal = process.env.DATABASE_URL.includes('.internal');
+
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     logging: false,
-    dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? { require: true, rejectUnauthorized: false } : false
-    }
+    dialectOptions: isInternal
+      ? {} // ⬅️ No SSL for internal connection
+      : {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        },
   });
 } else {
-  // Use individual env vars for local development
   sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
